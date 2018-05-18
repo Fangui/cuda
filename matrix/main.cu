@@ -1,16 +1,24 @@
 #include <iostream>
 
-const int lines = 256;
+const int lines = 1024;
 const int cols = 1024;
-const int grid = 16;
+const int block_size = 16;
 
 __global__ void 
 transpose_matrix(int *input, int *output)
 {
-    int x = blockIdx.x * grid + threadIdx.x;
-    int y = blockIdx.y * grid + threadIdx.y;
+    int i = blockIdx.x * block_size;
+    int j = blockIdx.y * block_size;
 
-    output[y + x * cols] = input[x + y * lines];
+    int x = threadIdx.x;
+    int y = threadIdx.y;
+
+    __shared__ int block_tr[block_size * block_size];
+
+    block_tr[y * block_size + x] = input[i + x + (j + y) * lines]; 
+
+    __syncthreads();
+    output[j + x + (i + y) * lines] = block_tr[x * block_size + y];
 }
 
 void transpose_ref(int *input, int *output)
@@ -43,8 +51,8 @@ int main()
     int *mat_b = new int[lines * cols];
     std::size_t nb_bits = lines * cols * sizeof(int);
 
-    dim3 blocks(lines / grid, cols / grid);
-    dim3 thread(grid, grid);
+    dim3 blocks(lines / block_size, cols / block_size);
+    dim3 thread(block_size, block_size);
 
     #pragma omp simd
     for (int i = 0; i < lines * cols; ++i)
