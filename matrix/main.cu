@@ -107,7 +107,6 @@ int main()
     cudaMemcpy(d_in, mat_a, nb_bits, cudaMemcpyHostToDevice);
 
     transpose_matrix <<<grid, block>>> (d_in, d_out);
-    cudaDeviceSynchronize();
 
     cudaMemcpy(mat_b, d_out, nb_bits, cudaMemcpyDeviceToHost); 
       
@@ -121,8 +120,6 @@ int main()
 
     delete[] mat_ref;
     mat_ref = new int[lines * lines];
-
-    cudaDeviceSynchronize();
 
     cudaMemcpy(d_in_b, mat_b, lines * lines * sizeof(int), cudaMemcpyHostToDevice);
     mult_mat <<<grid, block>>> (d_in, d_in_b, d_out); 
