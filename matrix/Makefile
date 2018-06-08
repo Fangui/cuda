@@ -1,10 +1,10 @@
 NVCC=nvcc
 BIN=main
 SRC=main.cu
-CUDAFLAGS= 
+CUDACXXFLAGS= -O2
    
 $(BIN):
-	$(NVCC) $(SRC) $(CUDAFLAGS) -o $(BIN)
+	$(NVCC) $(SRC) $(CUDACXXFLAGS) -o $(BIN)
 
 all: $(BIN)
 

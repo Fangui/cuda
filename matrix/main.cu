@@ -83,7 +83,7 @@ void mult_ref(int *mat_a, int *mat_b, int *output)
     }
 }
 
-int main()
+int main(void)
 {   
     int *mat_a = new int[lines * cols];
     int *mat_b = new int[lines * cols];
