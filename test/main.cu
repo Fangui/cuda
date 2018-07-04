@@ -1,13 +1,12 @@
-#include <iostream>
-
-#define SIZE 60
+#define SIZE     60000000
+#define BLOCKDIM 1024
 
 struct Test
 {
-    Test()
+    Test(unsigned size)
     {
-        data = new int[SIZE];
-        size = SIZE;
+        data = new int[size];
+        this->size = size;
     }
 
     ~Test()
@@ -19,30 +18,44 @@ struct Test
     unsigned size;
 };
 
+struct Pool
+{
+    Pool(unsigned size)
+    {
+        cudaMalloc(&d_test, sizeof(struct Test));
+        cudaMalloc(&d_data, size * sizeof(int));
+        cudaMemcpy(&(d_test->data), &d_data, sizeof(int *), cudaMemcpyHostToDevice);
+        cudaMemcpy(&(d_test->size), &(size), sizeof(unsigned), cudaMemcpyHostToDevice);
+    }
+    ~Pool()
+    {
+        cudaFree(d_test);
+        cudaFree(d_data);
+    }
+    Test *d_test;
+    int *d_data;
+};
+
 __global__ void init(struct Test *t)
 {
-    t->data[threadIdx.x] = threadIdx.x;
+    unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= t->size)
+      return;
+
+    t->data[idx] = idx;
 }
 
 void initTest()
 {
-    Test *t = new Test;
+    Test t(SIZE);
 
-    Test *d_test;
-    int *d_tmp;
+    unsigned size = (SIZE + BLOCKDIM - 1) / BLOCKDIM;
 
-    cudaMalloc(&d_test, sizeof(struct Test));
-    cudaMalloc(&d_tmp, sizeof(int) * SIZE);
-    cudaMemcpy(&(d_test->data), &d_tmp, sizeof(int *), cudaMemcpyHostToDevice);
+    static Pool p(SIZE);
 
-    init<<<1, SIZE>>> (d_test);
+    init<<<size, BLOCKDIM>>> (p.d_test);
 
-    cudaMemcpy(t->data, d_tmp, SIZE * sizeof(int), cudaMemcpyDeviceToHost);
-
-    cudaFree(d_test);
-    cudaFree(d_tmp);
-
-    delete t;
+    cudaMemcpy(t.data, p.d_data, SIZE * sizeof(int), cudaMemcpyDeviceToHost);
 }
 
 

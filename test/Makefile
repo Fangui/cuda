@@ -1,8 +1,8 @@
 NVCC=nvcc
 BIN=main
 SRC=main.cu
-CUDAFLAGS= -Xcompiler -O3 
-   
+CUDAFLAGS= -D_FORCE_INLINES -Xcompiler -O3
+
 $(BIN):
 	$(NVCC) $(SRC) $(CUDAFLAGS) -o $(BIN)
 
